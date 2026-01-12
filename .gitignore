@@ -1,0 +1,44 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/dictionaries
+.idea/libraries/
+.idea/caches/
+.idea/assetWizardSettings.xml
+.idea/modules.xml
+.idea/navEditor.xml
+captures/
+
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Local configuration
+local.properties
+.DS_Store
+
+# Log files
+*.log
+
+# Android Studio temporary files
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aar
+*.ap_
+*.dex
+*~
+
+# Backup files
+*.bak
+*.swp
+
+# OS generated files
+thumbs.db
+ehthumbs.db
+Desktop.ini
