@@ -1,5 +1,6 @@
 package com.example.recipecontrolmobile.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -28,10 +29,24 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
     )
+
+    fun validateEmail(text: String): Boolean {
+        return if (text.isBlank()) {
+            emailError = "El correo no puede estar vacío"
+            false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(text).matches()) {
+            emailError = "Formato de correo inválido"
+            false
+        } else {
+            emailError = null
+            true
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -85,10 +100,15 @@ fun LoginScreen(
             ) {
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { 
+                        email = it.trim()
+                        if (emailError != null) validateEmail(email)
+                    },
                     label = { Text("Correo Electrónico") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    isError = emailError != null,
+                    supportingText = { emailError?.let { Text(it) } }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -104,7 +124,11 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = onLoginSuccess,
+                    onClick = {
+                        if (validateEmail(email) && password.isNotBlank()) {
+                            onLoginSuccess()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

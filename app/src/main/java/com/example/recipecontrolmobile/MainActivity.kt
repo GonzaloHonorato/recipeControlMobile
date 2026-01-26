@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
                         onNavigateToRecover = { currentScreen = Screen.Recover }
                     )
                     Screen.Register -> RegisterScreen(
-                        onNavigateBack = { currentScreen = Screen.Login }
+                        onNavigateBack = { currentScreen = Screen.Login },
+                        onRegisterSuccess = { currentScreen = Screen.Minuta }
                     )
                     Screen.Recover -> RecoverPasswordScreen(
                         onNavigateBack = { currentScreen = Screen.Login }

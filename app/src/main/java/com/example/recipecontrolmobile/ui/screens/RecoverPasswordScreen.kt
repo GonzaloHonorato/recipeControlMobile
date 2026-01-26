@@ -1,5 +1,6 @@
 package com.example.recipecontrolmobile.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,17 +18,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecoverPasswordScreen(onNavigateBack: () -> Unit) {
     var email by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
     )
 
+    fun validateEmail(text: String): Boolean {
+        return if (text.isBlank()) {
+            emailError = "El correo no puede estar vacío"
+            false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(text).matches()) {
+            emailError = "Formato de correo inválido"
+            false
+        } else {
+            emailError = null
+            true
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Recuperar Clave", fontWeight = FontWeight.Bold) },
@@ -92,16 +111,27 @@ fun RecoverPasswordScreen(onNavigateBack: () -> Unit) {
                 ) {
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = { 
+                            email = it.trim()
+                            if (emailError != null) validateEmail(email)
+                        },
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        isError = emailError != null,
+                        supportingText = { emailError?.let { Text(it) } }
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { /* Handle Recovery */ },
+                        onClick = {
+                            if (validateEmail(email)) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Correo enviado correctamente")
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
