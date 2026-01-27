@@ -22,7 +22,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecoverPasswordScreen(onNavigateBack: () -> Unit) {
+fun RecoverPasswordScreen(
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -53,6 +57,11 @@ fun RecoverPasswordScreen(onNavigateBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onThemeToggle) {
+                        Text(if (isDarkMode) "MODO CLARO" else "MODO OSCURO")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

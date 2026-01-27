@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit,
     onNavigateBack: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
@@ -58,6 +60,11 @@ fun RegisterScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onThemeToggle) {
+                        Text(if (isDarkMode) "MODO CLARO" else "MODO OSCURO")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -186,7 +193,6 @@ fun RegisterScreen(
                     Button(
                         onClick = { 
                             if (validateEmail(email) && name.isNotBlank() && password.isNotBlank()) {
-                                // Aquí se crearía el usuario localmente en una app real
                                 onRegisterSuccess()
                             }
                         },

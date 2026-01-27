@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import com.example.recipecontrolmobile.model.Recipe
 import com.example.recipecontrolmobile.ui.screens.*
@@ -18,24 +19,40 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            RecipeControlMobileTheme {
+            // Estado global para el tema
+            var isDarkMode by remember { mutableStateOf(false) }
+            val systemInDark = isSystemInDarkTheme()
+            
+            LaunchedEffect(Unit) {
+                isDarkMode = systemInDark
+            }
+
+            RecipeControlMobileTheme(darkTheme = isDarkMode) {
                 var currentScreen by remember { mutableStateOf(Screen.Login) }
                 var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
 
                 when (currentScreen) {
                     Screen.Login -> LoginScreen(
+                        isDarkMode = isDarkMode,
+                        onThemeToggle = { isDarkMode = !isDarkMode },
                         onLoginSuccess = { currentScreen = Screen.Minuta },
                         onNavigateToRegister = { currentScreen = Screen.Register },
                         onNavigateToRecover = { currentScreen = Screen.Recover }
                     )
                     Screen.Register -> RegisterScreen(
+                        isDarkMode = isDarkMode,
+                        onThemeToggle = { isDarkMode = !isDarkMode },
                         onNavigateBack = { currentScreen = Screen.Login },
                         onRegisterSuccess = { currentScreen = Screen.Minuta }
                     )
                     Screen.Recover -> RecoverPasswordScreen(
+                        isDarkMode = isDarkMode,
+                        onThemeToggle = { isDarkMode = !isDarkMode },
                         onNavigateBack = { currentScreen = Screen.Login }
                     )
                     Screen.Minuta -> MinutaScreen(
+                        isDarkMode = isDarkMode,
+                        onThemeToggle = { isDarkMode = !isDarkMode },
                         onLogout = { currentScreen = Screen.Login },
                         onRecipeClick = { recipe ->
                             selectedRecipe = recipe
@@ -45,6 +62,8 @@ class MainActivity : ComponentActivity() {
                     Screen.Detail -> {
                         selectedRecipe?.let { recipe ->
                             RecipeDetailScreen(
+                                isDarkMode = isDarkMode,
+                                onThemeToggle = { isDarkMode = !isDarkMode },
                                 recipe = recipe,
                                 onBack = { currentScreen = Screen.Minuta }
                             )

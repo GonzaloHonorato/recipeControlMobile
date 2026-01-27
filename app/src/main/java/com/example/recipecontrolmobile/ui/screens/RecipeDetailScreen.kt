@@ -22,7 +22,12 @@ import com.example.recipecontrolmobile.model.Recipe
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeDetailScreen(recipe: Recipe, onBack: () -> Unit) {
+fun RecipeDetailScreen(
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit,
+    recipe: Recipe, 
+    onBack: () -> Unit
+) {
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), MaterialTheme.colorScheme.background)
     )
@@ -34,6 +39,11 @@ fun RecipeDetailScreen(recipe: Recipe, onBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onThemeToggle) {
+                        Text(if (isDarkMode) "MODO CLARO" else "MODO OSCURO")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

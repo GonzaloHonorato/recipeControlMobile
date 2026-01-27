@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,13 +26,13 @@ import com.example.recipecontrolmobile.model.sampleRecipes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MinutaScreen(
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit,
     onLogout: () -> Unit,
     onRecipeClick: (Recipe) -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    
-    // Simulación de sugerencia del día basada en el día actual o una lógica aleatoria
     val suggestion = remember { sampleRecipes.random() }
 
     val gradient = Brush.verticalGradient(
@@ -43,8 +42,12 @@ fun MinutaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi Minuta Semanal", fontWeight = FontWeight.Bold) },
+                title = { Text("NutriControl", fontWeight = FontWeight.Bold) },
                 actions = {
+                    // Botón de texto para el tema (evitamos iconos que fallen)
+                    TextButton(onClick = onThemeToggle) {
+                        Text(if (isDarkMode) "MODO CLARO" else "MODO OSCURO")
+                    }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
                     }
@@ -58,7 +61,7 @@ fun MinutaScreen(
             ExtendedFloatingActionButton(
                 onClick = { showSheet = true },
                 icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                text = { Text("Tips Nutricionales") },
+                text = { Text("Tips") },
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
             )
@@ -74,7 +77,6 @@ fun MinutaScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                // SECCIÓN: Sugerencia del Día
                 DailySuggestionCard(recipe = suggestion, onClick = { onRecipeClick(suggestion) })
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -94,7 +96,7 @@ fun MinutaScreen(
                     items(sampleRecipes) { recipe ->
                         RecipeCard(recipe, onClick = { onRecipeClick(recipe) })
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) } // Space for FAB
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }
@@ -125,56 +127,36 @@ fun DailySuggestionCard(recipe: Recipe, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Star,
-                    contentDescription = null,
-                    tint = Color.Yellow,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "RECOMENDACIÓN DEL DÍA",
+                    text = "RECOMENDACIÓN",
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.sp
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
                 )
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = recipe.name,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             
-            Text(
-                text = recipe.nutritionalInfo,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                fontSize = 14.sp
-            )
-
             Spacer(modifier = Modifier.height(16.dp))
             
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Button(
-                    onClick = onClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimary,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Ver Receta", fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-                }
+                Text("VER RECETA", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -185,25 +167,22 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = recipe.day.take(2).uppercase(),
+                    text = recipe.day.take(2),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -211,20 +190,10 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
             
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(text = recipe.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    text = recipe.nutritionalInfo,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.secondary
-                )
+                Text(text = recipe.nutritionalInfo, fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
             }
-            
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline
-            )
         }
     }
 }
@@ -238,72 +207,23 @@ fun NutritionalSheetContent() {
             .padding(bottom = 32.dp)
     ) {
         Text(
-            text = "Panel de Salud",
+            text = "Tips Saludables",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-        Text(
-            text = "Meta diaria recomendada para ti",
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            HealthMetricCard("Agua", "2.0L", Icons.Default.Face, Modifier.weight(1f))
-            HealthMetricCard("Calorías", "1.8k", Icons.Default.Favorite, Modifier.weight(1f))
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("• Bebe 2 litros de agua al día", modifier = Modifier.padding(vertical = 4.dp))
+                Text("• Realiza 30 min de ejercicio", modifier = Modifier.padding(vertical = 4.dp))
+                Text("• Prioriza frutas y verduras", modifier = Modifier.padding(vertical = 4.dp))
+            }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("HÁBITOS DE HOY", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
-        Spacer(modifier = Modifier.height(12.dp))
-
-        NutritionalCheckItem("Beber agua al despertar", true)
-        NutritionalCheckItem("30 min de actividad física", false)
-        NutritionalCheckItem("Consumir 3 frutas al día", true)
-    }
-}
-
-@Composable
-fun HealthMetricCard(label: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
-        }
-    }
-}
-
-@Composable
-fun NutritionalCheckItem(text: String, isDone: Boolean) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            if (isDone) Icons.Default.CheckCircle else Icons.Default.AddCircle,
-            contentDescription = null,
-            tint = if (isDone) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            color = if (isDone) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
     }
 }
