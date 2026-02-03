@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.recipecontrolmobile.model.Recipe
-import com.example.recipecontrolmobile.model.sampleRecipes
+import com.example.recipecontrolmobile.model.RecipeRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,11 +29,15 @@ fun MinutaScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit,
     onLogout: () -> Unit,
-    onRecipeClick: (Recipe) -> Unit
+    onRecipeClick: (Recipe) -> Unit,
+    onAddRecipeClick: () -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    val suggestion = remember { sampleRecipes.random() }
+    
+    // Obtenemos datos desde el repositorio
+    val recipes = remember { RecipeRepository.getAllRecipes() }
+    val suggestion = remember { RecipeRepository.getRandomRecipe() }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), MaterialTheme.colorScheme.background)
@@ -44,7 +48,6 @@ fun MinutaScreen(
             TopAppBar(
                 title = { Text("NutriControl", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // Botón de texto para el tema (evitamos iconos que fallen)
                     TextButton(onClick = onThemeToggle) {
                         Text(if (isDarkMode) "MODO CLARO" else "MODO OSCURO")
                     }
@@ -58,13 +61,25 @@ fun MinutaScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showSheet = true },
-                icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                text = { Text("Tips") },
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                SmallFloatingActionButton(
+                    onClick = onAddRecipeClick,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Añadir Receta")
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                ExtendedFloatingActionButton(
+                    onClick = { showSheet = true },
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                    text = { Text("Tips") },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
         }
     ) { padding ->
         Box(modifier = Modifier
@@ -93,7 +108,7 @@ fun MinutaScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(sampleRecipes) { recipe ->
+                    items(recipes) { recipe ->
                         RecipeCard(recipe, onClick = { onRecipeClick(recipe) })
                     }
                     item { Spacer(modifier = Modifier.height(80.dp)) }

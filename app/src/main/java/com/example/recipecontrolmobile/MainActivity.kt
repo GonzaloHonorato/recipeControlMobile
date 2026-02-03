@@ -11,7 +11,7 @@ import com.example.recipecontrolmobile.ui.screens.*
 import com.example.recipecontrolmobile.ui.theme.RecipeControlMobileTheme
 
 enum class Screen {
-    Login, Register, Recover, Minuta, Detail
+    Login, Register, Recover, Minuta, Detail, AddRecipe
 }
 
 class MainActivity : ComponentActivity() {
@@ -57,7 +57,8 @@ class MainActivity : ComponentActivity() {
                         onRecipeClick = { recipe ->
                             selectedRecipe = recipe
                             currentScreen = Screen.Detail
-                        }
+                        },
+                        onAddRecipeClick = { currentScreen = Screen.AddRecipe }
                     )
                     Screen.Detail -> {
                         selectedRecipe?.let { recipe ->
@@ -69,6 +70,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                    Screen.AddRecipe -> AddRecipeScreen(
+                        isDarkMode = isDarkMode,
+                        onThemeToggle = { isDarkMode = !isDarkMode },
+                        onBack = { currentScreen = Screen.Minuta }
+                    )
                 }
             }
         }

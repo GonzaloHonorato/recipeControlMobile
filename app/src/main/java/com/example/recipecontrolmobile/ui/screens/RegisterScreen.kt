@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.recipecontrolmobile.model.User
+import com.example.recipecontrolmobile.model.UserRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,6 +195,8 @@ fun RegisterScreen(
                     Button(
                         onClick = { 
                             if (validateEmail(email) && name.isNotBlank() && password.isNotBlank()) {
+                                // Guardar usuario en el repositorio real
+                                UserRepository.addUser(User(email, password, name))
                                 onRegisterSuccess()
                             }
                         },

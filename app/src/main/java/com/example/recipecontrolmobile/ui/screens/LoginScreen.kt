@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.recipecontrolmobile.model.UserRepository
 
 @Composable
 fun LoginScreen(
@@ -32,6 +33,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
+    var loginError by remember { mutableStateOf<String?>(null) }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
@@ -90,7 +92,16 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.secondary
             )
             
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+            if (loginError != null) {
+                Text(
+                    text = loginError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -105,12 +116,13 @@ fun LoginScreen(
                         value = email,
                         onValueChange = { 
                             email = it.trim()
+                            loginError = null
                             if (emailError != null) validateEmail(email)
                         },
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        isError = emailError != null,
+                        isError = emailError != null || loginError != null,
                         supportingText = { emailError?.let { Text(it) } }
                     )
 
@@ -118,10 +130,14 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { 
+                            password = it
+                            loginError = null
+                        },
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        isError = loginError != null
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -129,7 +145,12 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             if (validateEmail(email) && password.isNotBlank()) {
-                                onLoginSuccess()
+                                val user = UserRepository.validateUser(email, password)
+                                if (user != null) {
+                                    onLoginSuccess()
+                                } else {
+                                    loginError = "Correo o contraseña incorrectos"
+                                }
                             }
                         },
                         modifier = Modifier
@@ -161,8 +182,8 @@ fun LoginScreen(
             // Demo Card Enhanced
             Surface(
                 onClick = {
-                    email = "demo@nutricion.cl"
-                    password = "password123"
+                    email = "demo1@demo.cl"
+                    password = "123456"
                     onLoginSuccess()
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -179,7 +200,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(text = "ACCESO RÁPIDO DEMO", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(text = "Toca aquí para probar el prototipo", fontSize = 12.sp)
+                        Text(text = "Toca aquí para entrar como demo1", fontSize = 12.sp)
                     }
                 }
             }
