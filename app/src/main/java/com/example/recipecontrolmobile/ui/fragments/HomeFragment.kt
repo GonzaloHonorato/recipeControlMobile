@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.example.recipecontrolmobile.R
 import com.example.recipecontrolmobile.model.RecipeRepository
+import com.example.recipecontrolmobile.model.UserRepository
 import com.example.recipecontrolmobile.ui.theme.RecipeControlMobileTheme
 
 class HomeFragment : Fragment() {
@@ -63,8 +64,10 @@ class HomeFragment : Fragment() {
 
 @Composable
 fun HomeContent() {
-    val recipes = remember { RecipeRepository.getAllRecipes() }
-    val suggestion = remember { RecipeRepository.getRandomRecipe() }
+    val recipes by RecipeRepository.recipesFlow.collectAsState()
+    val suggestion = remember(recipes) { recipes.randomOrNull() }
+    val currentUser = UserRepository.getCurrentUser()
+    val userName = currentUser?.displayName?.ifBlank { null } ?: "Usuario"
 
     Column(
         modifier = Modifier
@@ -73,9 +76,8 @@ fun HomeContent() {
             .padding(16.dp)
     ) {
         // ── Bienvenida ──
-        // headlineLarge
         Text(
-            text = "Hola, Usuario",
+            text = "Hola, $userName",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary
         )
@@ -266,47 +268,44 @@ fun HomeContent() {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // titleLarge
-                Text(
-                    text = suggestion.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                // bodyMedium
-                Text(
-                    text = suggestion.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                // labelSmall
-                Text(
-                    text = suggestion.nutritionalInfo,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // OutlinedButton
-                    OutlinedButton(onClick = {}) {
-                        Text("Ver Receta")
-                    }
-                    // IconButton
-                    IconButton(onClick = {}) {
-                        Icon(
-                            Icons.Default.Favorite,
-                            contentDescription = "Guardar en favoritos",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+        if (suggestion != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = suggestion.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = suggestion.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = suggestion.nutritionalInfo,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(onClick = {}) {
+                            Text("Ver Receta")
+                        }
+                        IconButton(onClick = {}) {
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = "Guardar en favoritos",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }

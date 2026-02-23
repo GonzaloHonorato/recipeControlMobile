@@ -1,23 +1,40 @@
 package com.example.recipecontrolmobile.model
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.tasks.await
+
 object UserRepository {
-    private val users = mutableListOf<User>()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    init {
-        // Inicializar con los 4 registros demo
-        users.add(User("demo1@demo.cl", "123456", "Demo Usuario 1"))
-        users.add(User("demo2@demo.cl", "123456", "Demo Usuario 2"))
-        users.add(User("demo3@demo.cl", "123456", "Demo Usuario 3"))
-        users.add(User("demo4@demo.cl", "123456", "Demo Usuario 4"))
-    }
+    fun getCurrentUser(): FirebaseUser? = auth.currentUser
 
-    fun addUser(user: User) {
-        if (users.none { it.email == user.email }) {
-            users.add(user)
+    suspend fun login(email: String, password: String): Result<FirebaseUser> {
+        return try {
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            result.user?.let { Result.success(it) }
+                ?: Result.failure(Exception("Error de autenticación"))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    fun validateUser(email: String, password: String): User? {
-        return users.find { it.email == email && it.password == password }
+    suspend fun register(email: String, password: String, name: String): Result<FirebaseUser> {
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            result.user?.let { user ->
+                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .build()
+                user.updateProfile(profileUpdates).await()
+                Result.success(user)
+            } ?: Result.failure(Exception("Error al crear cuenta"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun logout() {
+        auth.signOut()
     }
 }

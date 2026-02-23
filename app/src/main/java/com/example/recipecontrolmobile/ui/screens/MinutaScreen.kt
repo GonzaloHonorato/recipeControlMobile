@@ -34,10 +34,10 @@ fun MinutaScreen(
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    
-    // Obtenemos datos desde el repositorio
-    val recipes = remember { RecipeRepository.getAllRecipes() }
-    val suggestion = remember { RecipeRepository.getRandomRecipe() }
+
+    // Obtenemos datos reactivos desde el repositorio (Firestore)
+    val recipes by RecipeRepository.recipesFlow.collectAsState()
+    val suggestion = remember(recipes) { recipes.randomOrNull() }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), MaterialTheme.colorScheme.background)
@@ -92,7 +92,9 @@ fun MinutaScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                DailySuggestionCard(recipe = suggestion, onClick = { onRecipeClick(suggestion) })
+                if (suggestion != null) {
+                    DailySuggestionCard(recipe = suggestion, onClick = { onRecipeClick(suggestion) })
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

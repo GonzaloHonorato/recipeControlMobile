@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1023881666549",
+    "project_id": "mobile-project-dc",
+    "storage_bucket": "mobile-project-dc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023881666549:android:7b6070cd8664cfd4104abc",
+        "android_client_info": {
+          "package_name": "com.example.recipecontrolmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB50fp52-tdyyfmOy3xZq2qjADhPESBxlI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

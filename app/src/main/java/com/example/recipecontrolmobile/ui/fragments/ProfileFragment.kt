@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.example.recipecontrolmobile.HomeActivity
 import com.example.recipecontrolmobile.R
+import com.example.recipecontrolmobile.model.UserRepository
 import com.example.recipecontrolmobile.ui.theme.RecipeControlMobileTheme
 
 class ProfileFragment : Fragment() {
@@ -67,6 +68,10 @@ class ProfileFragment : Fragment() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileContent(onLogout: () -> Unit) {
+    val currentUser = UserRepository.getCurrentUser()
+    val userName = currentUser?.displayName?.ifBlank { null } ?: "Usuario"
+    val userEmail = currentUser?.email ?: "Sin correo"
+
     var mealNotifications by remember { mutableStateOf(true) }
     var dailySuggestions by remember { mutableStateOf(false) }
     var waterGoal by remember { mutableFloatStateOf(8f) }
@@ -101,12 +106,12 @@ fun ProfileContent(onLogout: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    "Usuario Demo",
+                    userName,
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    "demo1@demo.cl",
+                    userEmail,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )

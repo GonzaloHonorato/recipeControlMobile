@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.recipecontrolmobile.model.UserRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -34,6 +35,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var loginError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
@@ -91,7 +94,7 @@ fun LoginScreen(
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.secondary
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
 
             if (loginError != null) {
@@ -114,7 +117,7 @@ fun LoginScreen(
                 ) {
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { 
+                        onValueChange = {
                             email = it.trim()
                             loginError = null
                             if (emailError != null) validateEmail(email)
@@ -123,21 +126,23 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         isError = emailError != null || loginError != null,
-                        supportingText = { emailError?.let { Text(it) } }
+                        supportingText = { emailError?.let { Text(it) } },
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { 
+                        onValueChange = {
                             password = it
                             loginError = null
                         },
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        isError = loginError != null
+                        isError = loginError != null,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -145,20 +150,43 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             if (validateEmail(email) && password.isNotBlank()) {
-                                val user = UserRepository.validateUser(email, password)
-                                if (user != null) {
-                                    onLoginSuccess()
-                                } else {
-                                    loginError = "Correo o contraseña incorrectos"
+                                isLoading = true
+                                loginError = null
+                                scope.launch {
+                                    val result = UserRepository.login(email, password)
+                                    isLoading = false
+                                    result.fold(
+                                        onSuccess = { onLoginSuccess() },
+                                        onFailure = { e ->
+                                            loginError = when {
+                                                e.message?.contains("no user record", ignoreCase = true) == true ->
+                                                    "No existe una cuenta con ese correo"
+                                                e.message?.contains("password is invalid", ignoreCase = true) == true ->
+                                                    "Contraseña incorrecta"
+                                                e.message?.contains("network", ignoreCase = true) == true ->
+                                                    "Error de conexión. Verifica tu internet"
+                                                else -> "Correo o contraseña incorrectos"
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("INICIAR SESIÓN", fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("INICIAR SESIÓN", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -182,9 +210,22 @@ fun LoginScreen(
             // Demo Card Enhanced
             Surface(
                 onClick = {
-                    email = "demo1@demo.cl"
-                    password = "123456"
-                    onLoginSuccess()
+                    if (!isLoading) {
+                        email = "demo1@demo.cl"
+                        password = "123456"
+                        isLoading = true
+                        loginError = null
+                        scope.launch {
+                            val result = UserRepository.login("demo1@demo.cl", "123456")
+                            isLoading = false
+                            result.fold(
+                                onSuccess = { onLoginSuccess() },
+                                onFailure = { e ->
+                                    loginError = "Error al acceder con demo: ${e.message}"
+                                }
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -205,7 +246,7 @@ fun LoginScreen(
                 }
             }
         }
-        
+
         // Botón de tema flotante para Login
         TextButton(
             onClick = onThemeToggle,

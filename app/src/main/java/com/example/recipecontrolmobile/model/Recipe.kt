@@ -1,5 +1,7 @@
 package com.example.recipecontrolmobile.model
 
+import com.google.firebase.firestore.DocumentSnapshot
+
 data class Recipe(
     val id: Int,
     val name: String,
@@ -12,8 +14,37 @@ data class Recipe(
         "Preparar los utensilios necesarios.",
         "Cocinar a fuego medio por 20 minutos.",
         "Servir caliente y disfrutar."
+    ),
+    val firestoreId: String = ""
+) {
+    fun toMap(): Map<String, Any> = mapOf(
+        "name" to name,
+        "description" to description,
+        "ingredients" to ingredients,
+        "nutritionalInfo" to nutritionalInfo,
+        "day" to day,
+        "instructions" to instructions
     )
-)
+
+    companion object {
+        fun fromDocument(doc: DocumentSnapshot): Recipe? {
+            return try {
+                Recipe(
+                    id = 0,
+                    name = doc.getString("name") ?: return null,
+                    description = doc.getString("description") ?: "",
+                    ingredients = (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                    nutritionalInfo = doc.getString("nutritionalInfo") ?: "",
+                    day = doc.getString("day") ?: "",
+                    instructions = (doc.get("instructions") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                    firestoreId = doc.id
+                )
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+}
 
 val sampleRecipes = listOf(
     Recipe(

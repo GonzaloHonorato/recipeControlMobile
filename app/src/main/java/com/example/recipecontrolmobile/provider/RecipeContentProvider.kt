@@ -9,6 +9,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import com.example.recipecontrolmobile.model.Recipe
 import com.example.recipecontrolmobile.model.RecipeRepository
+import kotlinx.coroutines.runBlocking
 
 class RecipeContentProvider : ContentProvider() {
 
@@ -75,7 +76,7 @@ class RecipeContentProvider : ContentProvider() {
             nutritionalInfo = values.getAsString(COL_NUTRITIONAL_INFO) ?: "",
             day = values.getAsString(COL_DAY) ?: ""
         )
-        RecipeRepository.addRecipe(recipe)
+        runBlocking { RecipeRepository.addRecipe(recipe) }
 
         context?.contentResolver?.notifyChange(uri, null)
         return ContentUris.withAppendedId(CONTENT_URI, id.toLong())

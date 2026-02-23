@@ -3,10 +3,14 @@ package com.example.recipecontrolmobile
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.recipecontrolmobile.model.RecipeRepository
+import com.example.recipecontrolmobile.model.UserRepository
 import com.example.recipecontrolmobile.ui.fragments.HomeFragment
 import com.example.recipecontrolmobile.ui.fragments.MinutaFragment
 import com.example.recipecontrolmobile.ui.fragments.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
 
@@ -17,6 +21,11 @@ class HomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home)
 
         isDarkMode = intent.getBooleanExtra("isDarkMode", false)
+
+        // Cargar recetas de Firestore
+        lifecycleScope.launch {
+            RecipeRepository.loadFromFirestore()
+        }
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
 
@@ -51,6 +60,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun logout() {
+        UserRepository.logout()
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

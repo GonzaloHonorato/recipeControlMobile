@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.recipecontrolmobile.model.Recipe
 import com.example.recipecontrolmobile.model.RecipeRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,8 +34,10 @@ fun AddRecipeScreen(
     var day by remember { mutableStateOf("Lunes") }
     var ingredients by remember { mutableStateOf("") }
     var instructions by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val gradient = Brush.verticalGradient(
         colors = listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), MaterialTheme.colorScheme.background)
     )
@@ -77,16 +80,18 @@ fun AddRecipeScreen(
                         onValueChange = { name = it },
                         label = { Text("Nombre de la receta") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
                         label = { Text("Descripción corta") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -95,7 +100,8 @@ fun AddRecipeScreen(
                         onValueChange = { nutritionalInfo = it },
                         label = { Text("Info Nutricional (ej: 300 kcal)") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -104,7 +110,8 @@ fun AddRecipeScreen(
                         onValueChange = { day = it },
                         label = { Text("Día de la semana") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -114,7 +121,8 @@ fun AddRecipeScreen(
                         label = { Text("Ingredientes (separados por coma)") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -124,16 +132,18 @@ fun AddRecipeScreen(
                         label = { Text("Pasos de preparación (uno por línea)") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
                         onClick = {
                             if (name.isNotBlank() && description.isNotBlank()) {
+                                isLoading = true
                                 val newRecipe = Recipe(
-                                    id = (RecipeRepository.getAllRecipes().size + 1),
+                                    id = 0,
                                     name = name,
                                     description = description,
                                     nutritionalInfo = nutritionalInfo,
@@ -141,17 +151,29 @@ fun AddRecipeScreen(
                                     ingredients = ingredients.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                                     instructions = instructions.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
                                 )
-                                RecipeRepository.addRecipe(newRecipe)
-                                Toast.makeText(context, "¡Receta creada con éxito!", Toast.LENGTH_SHORT).show()
-                                onBack()
+                                scope.launch {
+                                    RecipeRepository.addRecipe(newRecipe)
+                                    isLoading = false
+                                    Toast.makeText(context, "¡Receta creada con éxito!", Toast.LENGTH_SHORT).show()
+                                    onBack()
+                                }
                             } else {
                                 Toast.makeText(context, "Por favor completa los campos básicos", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("GUARDAR RECETA", fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("GUARDAR RECETA", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

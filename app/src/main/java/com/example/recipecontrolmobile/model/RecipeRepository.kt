@@ -1,46 +1,57 @@
 package com.example.recipecontrolmobile.model
 
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.tasks.await
+
 object RecipeRepository {
-    private val recipes = mutableListOf(
-        Recipe(
-            1, "Ensalada César", "Una ensalada clásica con pollo a la parrilla.",
-            listOf("Lechuga", "Pollo", "Crutones", "Queso Parmesano"),
-            "250 kcal, 20g Proteína", "Lunes",
-            listOf("Lavar la lechuga y cortarla.", "Cocinar el pollo a la plancha.", "Mezclar ingredientes en un bowl.", "Agregar aderezo y queso.")
-        ),
-        Recipe(
-            2, "Sopa de Verduras", "Sopa nutritiva con vegetales de estación.",
-            listOf("Zanahoria", "Apio", "Zapallo", "Papas"),
-            "150 kcal, 5g Fibra", "Martes",
-            listOf("Cortar verduras en cubos.", "Hervir agua con sal.", "Cocinar verduras hasta que estén blandas.", "Licuar si prefiere crema.")
-        ),
-        Recipe(
-            3, "Pescado al Horno", "Salmón con finas hierbas y limón.",
-            listOf("Salmón", "Limón", "Romero", "Sal de mar"),
-            "300 kcal, 30g Proteína", "Miércoles",
-            listOf("Precalentar el horno a 180°C.", "Aliñar el salmón con limón y romero.", "Hornear por 15-20 minutos.", "Servir con acompañamiento.")
-        ),
-        Recipe(
-            4, "Pasta Integral", "Pasta con salsa pomodoro natural.",
-            listOf("Pasta integral", "Tomates", "Albahaca", "Ajo"),
-            "350 kcal, 60g Carbohidratos", "Jueves",
-            listOf("Cocer la pasta al dente.", "Preparar salsa con tomates y ajo.", "Mezclar pasta con la salsa.", "Decorar con albahaca fresca.")
-        ),
-        Recipe(
-            5, "Tacos de Legumbres", "Tortillas de maíz con porotos negros y palta.",
-            listOf("Tortillas", "Porotos negros", "Palta", "Cebolla"),
-            "280 kcal, 15g Proteína", "Viernes",
-            listOf("Calentar las tortillas.", "Preparar el relleno de porotos.", "Picar la palta y cebolla.", "Armar los tacos a gusto.")
-        )
-    )
+    private val db = FirebaseFirestore.getInstance()
+    private val collection = db.collection("recipes")
 
-    fun getAllRecipes(): List<Recipe> = recipes
+    private val _recipesFlow = MutableStateFlow<List<Recipe>>(emptyList())
+    val recipesFlow: StateFlow<List<Recipe>> = _recipesFlow
 
-    fun getRandomRecipe(): Recipe = recipes.random()
+    fun getAllRecipes(): List<Recipe> = _recipesFlow.value
 
-    fun getRecipeById(id: Int): Recipe? = recipes.find { it.id == id }
+    fun getRandomRecipe(): Recipe =
+        _recipesFlow.value.randomOrNull() ?: sampleRecipes.random()
 
-    fun addRecipe(recipe: Recipe) {
-        recipes.add(recipe)
+    fun getRecipeById(id: Int): Recipe? = _recipesFlow.value.find { it.id == id }
+
+    suspend fun loadFromFirestore() {
+        try {
+            val snapshot = collection.get().await()
+            if (snapshot.isEmpty) {
+                seedInitialRecipes()
+                return
+            }
+            val recipes = snapshot.documents.mapNotNull { Recipe.fromDocument(it) }
+            _recipesFlow.value = recipes
+        } catch (e: Exception) {
+            if (_recipesFlow.value.isEmpty()) {
+                _recipesFlow.value = sampleRecipes
+            }
+        }
+    }
+
+    private suspend fun seedInitialRecipes() {
+        try {
+            sampleRecipes.forEach { recipe ->
+                collection.add(recipe.toMap()).await()
+            }
+            loadFromFirestore()
+        } catch (e: Exception) {
+            _recipesFlow.value = sampleRecipes
+        }
+    }
+
+    suspend fun addRecipe(recipe: Recipe) {
+        try {
+            collection.add(recipe.toMap()).await()
+            loadFromFirestore()
+        } catch (e: Exception) {
+            _recipesFlow.value = _recipesFlow.value + recipe
+        }
     }
 }

@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.recipecontrolmobile.model.User
 import com.example.recipecontrolmobile.model.UserRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,9 +31,12 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
+    var registerError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
     var selectedGender by remember { mutableStateOf("Femenino") }
     var acceptTerms by remember { mutableStateOf(false) }
-    
+    val scope = rememberCoroutineScope()
+
     val levels = listOf("Principiante", "Intermedio", "Avanzado")
     var expanded by remember { mutableStateOf(false) }
     var selectedLevel by remember { mutableStateOf(levels[0]) }
@@ -98,6 +101,15 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            if (registerError != null) {
+                Text(
+                    text = registerError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -112,22 +124,25 @@ fun RegisterScreen(
                         onValueChange = { name = it },
                         label = { Text("Nombre Completo") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { 
+                        onValueChange = {
                             email = it.trim()
+                            registerError = null
                             if (emailError != null) validateEmail(email)
                         },
                         label = { Text("Correo Electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         isError = emailError != null,
-                        supportingText = { emailError?.let { Text(it) } }
+                        supportingText = { emailError?.let { Text(it) } },
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -137,7 +152,8 @@ fun RegisterScreen(
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -193,24 +209,49 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { 
+                        onClick = {
                             if (validateEmail(email) && name.isNotBlank() && password.isNotBlank()) {
-                                // Guardar usuario en el repositorio real
-                                UserRepository.addUser(User(email, password, name))
-                                onRegisterSuccess()
+                                isLoading = true
+                                registerError = null
+                                scope.launch {
+                                    val result = UserRepository.register(email, password, name)
+                                    isLoading = false
+                                    result.fold(
+                                        onSuccess = { onRegisterSuccess() },
+                                        onFailure = { e ->
+                                            registerError = when {
+                                                e.message?.contains("already in use", ignoreCase = true) == true ->
+                                                    "Ya existe una cuenta con ese correo"
+                                                e.message?.contains("weak password", ignoreCase = true) == true ->
+                                                    "La contraseña debe tener al menos 6 caracteres"
+                                                e.message?.contains("network", ignoreCase = true) == true ->
+                                                    "Error de conexión. Verifica tu internet"
+                                                else -> "Error al crear cuenta: ${e.message}"
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = acceptTerms
+                        enabled = acceptTerms && !isLoading
                     ) {
-                        Text("REGISTRARSE", fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("REGISTRARSE", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             TextButton(onClick = onNavigateBack) {
                 Text("¿Ya tienes cuenta? Inicia sesión")
             }
