@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">RecipeControlMobile</string>
+    <string name="widget_title">Receta del Día</string>
+    <string name="widget_description">Muestra una receta aleatoria de NutriControl</string>
 </resources>
